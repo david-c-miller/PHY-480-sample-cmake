@@ -6,7 +6,10 @@ CMakeCache.txt
 CMakeFiles/*
 
 
+# normal file ignores
 *~
+*.o
 
+# project specifics
 Tridiag.x
-CMAKE-EXAMPLE
+testcode
