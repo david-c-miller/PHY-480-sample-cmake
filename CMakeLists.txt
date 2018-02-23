@@ -1,24 +1,71 @@
-cmake_minimum_required (VERSION 2.6)
-project (phy480-cmake-example)
+#########################################################################
+## A Sample CMake Make System
+## Written by David Miller (mill2723 at msu dot edu)
 
-#versioning
-set (phy480-cmake-example_VERSION_MAJOR 1)
-set (phy480-cmake-example_VERSION_MINOR 0)
+## set compilers (if needed)
+# set (CMAKE_C_COMPILER "gcc")
+set (CMAKE_CXX_COMPILER "g++")
+#########################################################################
 
+#########################################################################
+## Set a minimum version
+cmake_minimum_required (VERSION 2.8)
+## name the project (VERSION statement requires 3.0 or newer)
+#project (PHY480_CMAKE_EXAMPLE VERSION 1.0.0 LANGUAGES CXX Fortran C)
+project (PHY480_CMAKE_EXAMPLE LANGUAGES CXX Fortran C)
+
+## version for the project
+# set (PHY480_CMAKE_EXAMPLE_MAJOR_VERSION 1)
+# set (PHY480_CMAKE_EXAMPLE_MINOR_VERSION 0)
+# set (PHY480_CMAKE_EXAMPLE_PATCH_VERSION 0)
+#########################################################################
+
+#########################################################################
 ## include directories (if different)
 #include_directories(inc)
+#########################################################################
 
-## set flags
-set (CMAKE_CXX_FLAGS "-O0 -g")
+#########################################################################
+## set compiler flags
+
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g")
+set (CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 
 ## set sources
 set(SOURCES src/TridiagToeplitz.cpp)
+#########################################################################
 
-## check for libraries and header files
-find_library(ARMA_LIB armadillo)
-find_library(LAPACK_LIB lapack)
-find_library(BLAS_LIB blas)
+#########################################################################
+## check for header files
+include (CheckIncludeFiles)
+include (CheckIncludeFileCXX)
 
+CHECK_INCLUDE_FILE_CXX(cmath       HAVE_CMATH)
+CHECK_INCLUDE_FILE_CXX(iostream    HAVE_IOSTREAM)
+CHECK_INCLUDE_FILE_CXX(fstream     HAVE_FSTREAM)
+CHECK_INCLUDE_FILE_CXX(iomanip     HAVE_IOMANIP)
+CHECK_INCLUDE_FILE_CXX(armadillo   HAVE_ARMADILLO)
+#########################################################################
+
+#########################################################################
+## check for libraries
+
+## some libraries have a cmake module
+include(FindLAPACK)
+include(FindBLAS)
+
+## this module can be used to check for C Libraries
+## include (CheckLibraryExists)
+
+## For C++ use find_library
+find_library(ARMA_LIBRARIES  armadillo)
+message(STATUS ${ARMA_LIBRARIES} )
+#########################################################################
+
+#########################################################################
 ## add a binary file to be built
 ## this places it in the bin directory
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY bin)
@@ -26,15 +73,47 @@ set(PROG "Tridiag.x")
 
 add_executable(${PROG} ${SOURCES})
 
-## declare subdirs
+## link external libraries
+target_link_libraries(${PROG} ${ARMA_LIBRARIES})
+target_link_libraries(${PROG} ${LAPACK_LIBRARIES})
+target_link_libraries(${PROG} ${BLAS_LIBRARIES})
+#########################################################################
+
+## this is the end of a typical CMake file
+
+#########################################################################
+## This is a kinda hacked together method to force compilation of
+## subdirectories with their own Makefiles
+## This is **definitely** not the best way of doing this but is a good
+## example of how to make this work if you were building something else
+## in a separate subdir (think documentation or figures)
+
+## If you have a CMakeLists.txt file in the subdirectory you can just
+## use this to declare subdirs
 ## add_subdirectory(src/UnitTestscpp/JacobiTests EXCLUDE_FROM_ALL)
+
+## Otherwise we setup some external build targets and then create a single
+## target for `make all` which depends on the individual targets
 
 ## external build targets
 set(JACOBI_DIR src/UnitTestscpp/JacobiTests)
 set(TOEPLITZ_DIR src/UnitTestscpp/ToeplitzTests)
 
-file(GLOB testcode_jacobi_sources ${JACOBI_DIR}/*.cpp ${JACOBI_DIR}/*.hpp ${JACOBI_DIR}/*.h)
-file(GLOB testcode_toeplitz_sources ${TOEPLITZ_DIR}/*.cpp ${TOEPLITZ_DIR}/*.hpp ${TOEPLITZ_DIR}/*.h)
+## This gets all the files from the subdirectories which we want to rebuild
+## on changes to
+file(
+    GLOB testcode_jacobi_sources
+    ${JACOBI_DIR}/*.cpp
+    ${JACOBI_DIR}/*.hpp
+    ${JACOBI_DIR}/*.h
+)
+
+file(
+    GLOB testcode_toeplitz_sources
+    ${TOEPLITZ_DIR}/*.cpp
+    ${TOEPLITZ_DIR}/*.hpp
+    ${TOEPLITZ_DIR}/*.h
+)
 
 add_custom_target(
     testcode_jacobi
@@ -54,8 +133,4 @@ add_custom_target(
     testcode ALL
     DEPENDS testcode_jacobi testcode_toeplitz
 )
-
-## link external libraries
-target_link_libraries(${PROG} ${ARMA_LIB})
-target_link_libraries(${PROG} ${LAPACK_LIB})
-target_link_libraries(${PROG} ${BLAS_LIB})
+#########################################################################
