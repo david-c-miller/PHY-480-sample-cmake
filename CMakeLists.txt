@@ -64,11 +64,11 @@ include (FindBLAS)
 ## For C++ use find_library
 find_library (ARMA_LIBRARIES  armadillo)
 
-if(${ARMA_LIBRARIES} EQUAL "ARMA_LIBRARIES-NOTFOUND")
+if (ARMA_LIBRARIES STREQUAL "ARMA_LIBRARIES-NOTFOUND")
 	message (FATAL_ERROR "Armadillo library not found" )
-else()
+else ()
 	message (STATUS "Found library: ${ARMA_LIBRARIES}" )
-endif()
+endif ()
 #########################################################################
 
 #########################################################################
